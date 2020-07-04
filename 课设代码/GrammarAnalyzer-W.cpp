@@ -30,14 +30,12 @@ bool Parser::match(Tag need)
 
 void Parser::CompUnit()
 {
-    if(look->tag==KW_INT){
-        move();
+    if(match(KW_INT)){
         if(match(ID)){
             VarOrFunc();
             UnitTail();
         }
-    }else if(look->tag==KW_VOID){
-        move();
+    }else if(match(KW_VOID)){
         if(match(ID)){
             if(match(LPAREN)){
                 FuncFParams();
@@ -61,7 +59,7 @@ void Parser::VarOrFunc()
         VarDeclTail();
         if(match(SEMICON))
             ;
-    }else if(look->tag==LPAREN){
+    }else if(match(LPAREN)){
         FuncFParams();
         if(match(RPAREN))
             Block();
@@ -105,8 +103,7 @@ void Parser::Decl()
 
 void Parser::ConstDecl()
 {
-    match(KW_CONST);
-    if(look->tag==KW_INT){
+    if(match(KW_CONST)){
         Btype();
         ConstDef();
         ConstDeclTail();
@@ -171,20 +168,18 @@ void Parser::ConstInitValTail()
 void Parser::CVTTail()
 {
     if(match(COMMA)){
-        VarDef();
-        VarDeclTail();
+        ConstInitVal();
+        CVTTail();
     }
 }
 
 void Parser::VarDecl()
 {
-    if(match(KW_INT)){
-        Btype();
-        VarDef();
-        VarDeclTail();
-        if(match(SEMICON))
-            ;
-    }
+    Btype();
+    VarDef();
+    VarDeclTail();
+    if(match(SEMICON))
+        return;
 }
 
 void Parser::VarDeclTail()
@@ -257,10 +252,10 @@ void Parser::FuncType()
 
 void Parser::FuncFParams()
 {
-   if(look->tag==RPAREN)
-       return;
-   FuncFParam();
-   FuncFParamsTail();
+    if (look->tag == KW_VOID || look->tag == KW_INT) {
+        FuncFParam();
+        FuncFParamsTail();
+    }
 }
 
 void Parser::FuncFParamsTail()
@@ -286,6 +281,15 @@ void Parser::ArrayParam()
     }
 }
 
+void Parser::ArrayParamTail(){
+    if(Match(LBRACK)){
+        Exp();
+        if(Match(RBRACK)){
+            ArrayParamTail();
+        }
+    }
+}
+
 void Parser::Block()
 {
     if(match(LBRACE)){
@@ -299,14 +303,11 @@ void Parser::BlockItem()
 {
     if(look->tag==RBRACE)
         return;
-    else if(look->tag==ID||look->tag==LPAREN||look->tag==INTCONST
-    ||look->tag==ADD||look->tag==SUB||look->tag==NOT||look->tag==SEMICON
-    ||look->tag==LBRACE||look->tag==KW_IF||look->tag==KW_WHILE||look->tag==KW_BREAK
-    ||look->tag==KW_CONTINUE||look->tag==KW_RETURN){
-        Stmt();
+    else if(look->tag == INTCONST || look->tag == KW_INT){
+        Decl();
         BlockItem();
     }else{
-        Decl();
+        Stmt();
         BlockItem();
     }
 }
@@ -315,10 +316,18 @@ void Parser::Stmt()
 {
     if(match(ID)){
         LValOrFunc();
+        if(match(ID))
+            ;
     }else if(match(LPAREN)){
-        NewMulExp();
-        NewAddExp();
-    }else if(match(INTCONST)){
+        exp();
+        if(match(RPAREN)){
+            NewMulExp();
+            NewAddExp();
+            if(match(SEMICON))
+                ;
+        }
+    }else if(look->tag == INTCONST)){
+        Num();
         NewMulExp();
         NewAddExp();
     }else if(look->tag==ADD||look->tag==SUB||look->tag==NOT){
@@ -328,6 +337,9 @@ void Parser::Stmt()
         NewAddExp();
     }else if(match(SEMICON))
         return;
+    else if(look->tag == LBRACE){
+        Block();
+    }
     else if(match(KW_IF)){
         if(match(LPAREN)){
             Cond();
@@ -351,6 +363,18 @@ void Parser::Stmt()
         ExpOpt();
         match(SEMICON);
     }
+}
+
+void Parser::ExpOpt(){
+    if(match(SEMICON)){
+        return;
+    }else
+        Exp();
+}
+
+void ElseOpt(){
+    if(match(KW_ELSE))
+        Stmt();
 }
 
 void Parser::LValOrFunc(){
@@ -489,13 +513,16 @@ void Parser::RelExp()
 
 void Parser::NewRelExp()
 {
-    if(match(MUL)){
+    if(match(LT)){
         AddExp();
         NewRelExp();
-    }else if(match(DIV)){
+    }else if(match(GT)){
         AddExp();
         NewRelExp();
-    }else if(match(MOD)){
+    }else if(match(LE)){
+        AddExp();
+        NewRelExp();
+    }else if(match(GE)){
         AddExp();
         NewRelExp();
     }
@@ -550,3 +577,4 @@ void Parser::ConstExp()
 {
     AddExp();
 }
+
