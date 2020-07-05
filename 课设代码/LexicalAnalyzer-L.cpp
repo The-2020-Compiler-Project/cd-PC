@@ -1,7 +1,19 @@
+#pragma once
 #include"lexicalanalyzer.h"
 #include <sstream>
-
+using namespace std;
 //词法记号标签
+/*
+	编译参数初始化
+*/
+bool Args::showChar = false;
+bool Args::showToken = false;
+bool Args::showSym = false;
+bool Args::showIr = false;
+bool Args::showOr = false;
+bool Args::showBlock = false;
+bool Args::showHelp = false;
+bool Args::opt = false;
 const char* tokenName[] =
 {
 	"error",//错误，异常，结束标记等
@@ -28,10 +40,6 @@ const char* tokenName[] =
 Scanner::Scanner(char* name)
 {
 	file = fopen(name, "r");//打开指定的待扫描文件
-	if (!file) {
-		printf(FATAL"文件%s打开失败！请检查文件名和路径。\n", name);
-		Error::errorNum++;//错误数累加
-	}
 	fileName = name;
 	//初始化扫描状态
 	lineLen = 0;
@@ -45,8 +53,6 @@ Scanner::~Scanner()
 {
 	if (file)
 	{
-		PDEBUG(WARN"文件未全部扫描！\n");
-		Error::warnNum++;//警告数累加
 		fclose(file);
 	}
 }
@@ -148,7 +154,7 @@ string Id::toString()
 
 //数字类的函数定义
 
-Num::Num(int v) :Token(NUM), val(v)
+Num::Num(int v) :Token(COSNT), val(v)
 {}
 
 string Num::toString()
@@ -217,9 +223,6 @@ bool Lexer::scan(char need)
 	return true;
 }
 
-//打印词法错误
-#define LEXERROR(code) Error::lexError(code)
-
 Token* Lexer::tokenize()
 {
 	for (; ch != -1;) {//过滤掉无效的词法记号，只保留正常词法记号或者NULL
@@ -263,7 +266,6 @@ Token* Lexer::tokenize()
 						} while (ch >= '0' && ch <= '9' || ch >= 'A' && ch <= 'F' || ch >= 'a' && ch <= 'f');
 					}
 					else {
-						LEXERROR(NUM_HEX_TYPE);//0x后无数据
 						t = new Token(ERR);
 					}
 				}
@@ -276,7 +278,6 @@ Token* Lexer::tokenize()
 						} while (ch >= '0' && ch <= '1');
 					}
 					else {
-						LEXERROR(NUM_BIN_TYPE);//0b后无数据
 						t = new Token(ERR);
 					}
 				}
@@ -302,116 +303,101 @@ Token* Lexer::tokenize()
 				else if (ch == '0')c = '\0';
 				else if (ch == '\'')c = '\'';
 				else if (ch == -1 || ch == '\n') {//文件结束 换行
-					LEXERROR(CHAR_NO_R_QUTION);
 					t = new Token(ERR);
 				}
 				else c = ch;//没有转义
 			}
 			else if (ch == '\n' || ch == -1) {//行 文件结束
-				LEXERROR(CHAR_NO_R_QUTION);
 				t = new Token(ERR);
 			}
 			else if (ch == '\'') {//没有数据
-				LEXERROR(CHAR_NO_DATA);
 				t = new Token(ERR);
 				scan();//读掉引号
 			}
-			else c = ch;//正常字符
-			if (!t) {
-				if (scan('\'')) {//匹配右侧引号,读掉引号
-					t = new Char(c);
-				}
-				else {
-					LEXERROR(CHAR_NO_R_QUTION);
-					t = new Token(ERR);
-				}
-			}
-		}
-		else {
-			switch (ch)//界符
-			{
-			case '#'://忽略行（忽略宏定义）
-				while (ch != '\n' && ch != -1)
-					scan();//行 文件不结束
-				t = new Token(ERR);
-				break;
-			case '+':
-				t = new Token(scan('+') ? INC : ADD); break;
-			case '-':
-				t = new Token(scan('-') ? DEC : SUB); break;
-			case '*':
-				t = new Token(MUL); scan(); break;
-			case '/':
-				scan();
-				if (ch == '/') {//单行注释
+			else {
+				switch (ch)//界符
+				{
+				case '#'://忽略行（忽略宏定义）
 					while (ch != '\n' && ch != -1)
 						scan();//行 文件不结束
 					t = new Token(ERR);
-				}
-				else if (ch == '*') {//多行注释,不允许嵌套注释
-					while (!scan(-1)) {//一直扫描
-						if (ch == '*') {
-							if (scan('/'))break;
-						}
+					break;
+				case '+':
+					t = new Token(scan('+') ? INC : ADD); break;
+				case '-':
+					t = new Token(scan('-') ? DEC : SUB); break;
+				case '*':
+					t = new Token(MUL); scan(); break;
+				case '/':
+					scan();
+					if (ch == '/') {//单行注释
+						while (ch != '\n' && ch != -1)
+							scan();//行 文件不结束
+						t = new Token(ERR);
 					}
-					if (ch == -1)//没正常结束注释
-						LEXERROR(COMMENT_NO_END);
-					t = new Token(ERR);
+					else if (ch == '*') {//多行注释,不允许嵌套注释
+						while (!scan(-1)) {//一直扫描
+							if (ch == '*') {
+								if (scan('/'))break;
+							}
+						}
+						if (ch == -1)//没正常结束注释
+
+							t = new Token(ERR);
+					}
+					else
+						t = new Token(DIV);
+					break;
+				case '%':
+					t = new Token(MOD); scan(); break;
+				case '>':
+					t = new Token(scan('=') ? GE : GT); break;
+				case '<':
+					t = new Token(scan('=') ? LE : LT); break;
+				case '=':
+					t = new Token(scan('=') ? EQU : ASSIGN); break;
+				case '&':
+					t = new Token(scan('&') ? AND : LEA); break;
+				case '|':
+					t = new Token(scan('|') ? OR : ERR);
+					if (t->tag == ERR)
+						break;
+				case '!':
+					t = new Token(scan('=') ? NEQU : NOT); break;
+				case ',':
+					t = new Token(COMMA); scan(); break;
+				case ':':
+					t = new Token(COLON); scan(); break;
+				case ';':
+					t = new Token(SEMICON); scan(); break;
+				case '(':
+					t = new Token(LPAREN); scan(); break;
+				case ')':
+					t = new Token(RPAREN); scan(); break;
+				case '[':
+					t = new Token(LBRACK); scan(); break;
+				case ']':
+					t = new Token(RBRACK); scan(); break;
+				case '{':
+					t = new Token(LBRACE); scan(); break;
+				case '}':
+					t = new Token(RBRACE); scan(); break;
+				case -1:scan(); break;
+				default:
+					t = new Token(ERR);//错误的词法记号
+					scan();
 				}
-				else
-					t = new Token(DIV);
-				break;
-			case '%':
-				t = new Token(MOD); scan(); break;
-			case '>':
-				t = new Token(scan('=') ? GE : GT); break;
-			case '<':
-				t = new Token(scan('=') ? LE : LT); break;
-			case '=':
-				t = new Token(scan('=') ? EQU : ASSIGN); break;
-			case '&':
-				t = new Token(scan('&') ? AND : LEA); break;
-			case '|':
-				t = new Token(scan('|') ? OR : ERR);
-				if (t->tag == ERR)
-					LEXERROR(OR_NO_PAIR);//||没有一对
-				break;
-			case '!':
-				t = new Token(scan('=') ? NEQU : NOT); break;
-			case ',':
-				t = new Token(COMMA); scan(); break;
-			case ':':
-				t = new Token(COLON); scan(); break;
-			case ';':
-				t = new Token(SEMICON); scan(); break;
-			case '(':
-				t = new Token(LPAREN); scan(); break;
-			case ')':
-				t = new Token(RPAREN); scan(); break;
-			case '[':
-				t = new Token(LBRACK); scan(); break;
-			case ']':
-				t = new Token(RBRACK); scan(); break;
-			case '{':
-				t = new Token(LBRACE); scan(); break;
-			case '}':
-				t = new Token(RBRACE); scan(); break;
-			case -1:scan(); break;
-			default:
-				t = new Token(ERR);//错误的词法记号
-				LEXERROR(TOKEN_NO_EXIST);
-				scan();
 			}
+			//词法记号内存管理
+			if (token)delete token;
+			token = t;//强制记录
+			if (token && token->tag != ERR)//有效,直接返回
+				return token;
+			else
+				continue;//否则一直扫描直到结束
 		}
-		//词法记号内存管理
+		//文件结束
 		if (token)delete token;
-		token = t;//强制记录
-		if (token && token->tag != ERR)//有效,直接返回
-			return token;
-		else
-			continue;//否则一直扫描直到结束
+		return token = new Token(END);
 	}
-	//文件结束
-	if (token)delete token;
-	return token = new Token(END);
 }

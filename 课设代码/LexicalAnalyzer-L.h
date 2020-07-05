@@ -1,22 +1,35 @@
-#ifndenf _LEXICALANALYZER_H
+#pragma once
+#ifndef _LEXICALANALYZER_H
 #define _LEXICALANALYZER_H
 #include<iostream>
-#include<hash_map>
 #include<string>
-#define BUFLEN 80;//缓冲区大小
+#include<list>
+#include <ext/hash_map>
+using namespace __gnu_cxx;
 int lineLen = 0;//缓冲区内数据长度
 int readPos = -1;//读取位置
-char line[BUFLEN];//缓冲区
 int lineNum = 1;//行号
 int colNum = 0;//列号
 char lastChar;//上一个字符
-
+using namespace std;
+class Args
+{
+public:
+	static bool showChar;//显示字符
+	static bool showToken;//显示词法记号
+	static bool showSym;//显示符号表
+	static bool showIr;//显示中间代码
+	static bool showOr;//显示优化后的中间代码
+	static bool showBlock;//显示基本块和流图关系
+	static bool showHelp;//显示帮助
+	static bool opt;//是否执行优化
+};
 enum Tag {
 	ERR,					//错误，异常
 	END,					//文件结束标记
 	ID,						//标识符
 	KW_INT, KW_VOID,			//数据类型
-	NUM,					//常量
+	COSNT,					//常量
 	NOT, LEA,				//单目运算符
 	ADD, SUB, MUL, DIV, MOD,	//算数运算符
 	INC, DEC,				//自加自减
@@ -61,42 +74,6 @@ public:
 
 };
 //派生类到此为止
-
-//关键字表类
-class Keywords
-{
-	struct string_hash {
-		size_t operator()(const string& str) const {
-			return __stl_hash_string(str.c_str());
-		}
-	};
-	hash_map<string, tag, string_hash> keywords;
-public:
-	Keywords();					//关键字表初始化
-	Tag getTag(string name);	//测试是否关键字
-}
-};
-
-//词法分析器
-
-class Lexer
-{
-	static Keywords keywords;//关键字列表
-
-	Scanner& scanner;//扫描器
-	char ch;//读入的字符
-	bool scan(char need = 0);//扫描与匹配
-
-	Token* token;//记录扫描的词法记号
-
-public:
-	Lexer(Scanner& sc);
-	~Lexer();
-	Token* tokenize();//有限自动机匹配，词法记号解析
-};
-
-//扫描器
-
 class Scanner
 {
 	//文件指针
@@ -132,4 +109,39 @@ public:
 	int getCol();//获取列号
 
 };
+//关键字表类
+class Keywords
+{
+	struct string_hash {
+		size_t operator()(const string& str) const {
+			return __stl_hash_string(str.c_str());
+		}
+	};
+	hash_map<string, Tag> keywords;
+public:
+	Keywords();					//关键字表初始化
+	Tag getTag(string name);	//测试是否关键字
+};
+
+//词法分析器
+
+class Lexer
+{
+	static Keywords keywords;//关键字列表
+
+	Scanner& scanner;//扫描器
+	char ch;//读入的字符
+	bool scan(char need = 0);//扫描与匹配
+
+	Token* token;//记录扫描的词法记号
+
+public:
+	Lexer(Scanner& sc);
+	~Lexer();
+	Token* tokenize();//有限自动机匹配，词法记号解析
+};
+
+//扫描器
+
+
 #endif
