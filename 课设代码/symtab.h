@@ -164,6 +164,7 @@ private:
     int scopeNum;                                 //作用域编号
     vector<int> scopePath;                        //作用域的嵌套路径
     vector<string> funList;                       //所有的函数名，按定义顺序存放
+    GenIR* inter;                                 //
 };
 
 class Var {
@@ -333,6 +334,11 @@ public:
     vector<int> getArrayVal() {
         return arrayVal;
     }
+
+    vector<int> getDimension() {
+        return dimension;
+    }
+
     //输出变量的中间代码形式
     void value() {
         if(isConstant) {
