@@ -203,6 +203,7 @@ public:
         setType(v->getType);
         if(v->isArray)
             setArray(v->dimension);
+        setPtr(v->isArray || v->isPtr);
         setName("");
     }
 
@@ -213,6 +214,15 @@ public:
         setType(t);
         isArray = isarray;
         setName("");
+    }
+
+    //构造变量
+    Var(vector<int>& scope, Tag t, string name, Var* init) {
+        clear();
+        scopePath = scope;
+        setType(t);
+        setName(name);
+        initData = init;
     }
 
     //获取变量名
@@ -235,6 +245,7 @@ public:
         return size;
     }
 
+    //获取类型
     Tag getType() {
         return type;
     }
@@ -339,6 +350,27 @@ public:
         return dimension;
     }
 
+    //设置是否为指针
+    void setPtr(bool ptr) {
+        isPtr = ptr;
+        size = 4;
+    }
+
+    //是否为指针
+    bool getPtr() {
+        return isPtr;
+    }
+
+    //设置指针
+    void setPointer(Var* ptr) {
+        this->ptr = ptr;
+    }
+
+    //获取指针变量
+    Var* getPointer() {
+        return ptr;
+    }
+
     //输出变量的中间代码形式
     void value() {
         if(isConstant) {
@@ -371,6 +403,7 @@ private:
     Tag type;                                     //变量类型
     bool isConstant;                              //是否为常量
     bool isArray;                                 //是否为数组
+    bool isPtr;                                   //是否为指针
     int arrayLength;                              //数组长度
     Var* initData;                                //初值
     bool isInited;                                //是否初始化
@@ -380,6 +413,7 @@ private:
     int offset;                                   //变量的栈帧偏移
     vector<int> scopePath;                        //作用域的嵌套路径
     int size;                                     //变量大小，单位：字节
+    Var* ptr;                                     //指向当前变量指针变量
 
     //数据流分析
     int index;                                    //列表索引
@@ -415,7 +449,7 @@ public:
         scopeSP.pop_back();
     }
 
-    locate(Var* var) {
+    void locate(Var* var) {
         int size = var->getSize();
         size += (4 - size % 4) % 4;               //4字节对齐
         scopeSP.back() += size;
