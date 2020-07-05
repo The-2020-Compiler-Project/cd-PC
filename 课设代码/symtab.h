@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#define SEMERROR(code, name) Error::semError(code, name)
 using namespace std;
 
 class Var;
@@ -157,6 +158,9 @@ public:
         }
     }
 
+public:
+    static Var* voidVar;
+
 private:
     unordered_map<string, vector<Var*>*> varTab;  //变量表，值为同名变量链
     unordered_map<string, Fun*> funTab;           //函数表
@@ -169,11 +173,22 @@ private:
 
 class Var {
 public:
+    Var() {
+        clear();
+        setName("<void>");
+        setLeft(false);
+        intVal = 0;
+        isConstant = false;
+        setType(KW_VOID);
+        isPtr = true;
+    }
+
     //创建常量的变量，无作用域
     Var(Token* tk) {
         clear();
         isConstant = true;
         setType(KW_INT);
+        setLeft(false);
         name = "<int>";
         intVal = ((Num*)tk)->val;
     }
@@ -185,6 +200,7 @@ public:
         isConstant = true;
         setType(KW_INT);
         intVal = v;
+        setLeft(false);
     }
 
     //数组
@@ -205,6 +221,7 @@ public:
             setArray(v->dimension);
         setPtr(v->isArray || v->isPtr);
         setName("");
+        setLeft(false);
     }
 
     //临时变量（会有数组吗？）
@@ -214,6 +231,7 @@ public:
         setType(t);
         isArray = isarray;
         setName("");
+        setLeft(false);
     }
 
     //构造变量
@@ -321,6 +339,10 @@ public:
         return initData;
     }
 
+    void setLeft(bool L) {
+        isLeft = L;
+    }
+
     //能否作左值
     bool getLeft() {
         return !isConstant && !isArray;
@@ -348,6 +370,11 @@ public:
 
     vector<int> getDimension() {
         return dimension;
+    }
+
+    //
+    bool isVoid() {
+        return type == KW_VOID;
     }
 
     //设置是否为指针
@@ -384,8 +411,10 @@ public:
     void clear() {
         scopePath.push_back(-1);
         isArray = false;
+        isPtr = false;
         isConstant = false;
-        isInited = false;
+        isInited = true;
+        isLeft = false;
         size = 0;
         offset = 0;
         index = -1;
@@ -398,12 +427,18 @@ public:
 
     }
 
+    //获取特殊变量
+    Var* getVoid() {
+        return Symtab::voidVar;
+    }
+
 private:
     string name;                                  //变量名
     Tag type;                                     //变量类型
     bool isConstant;                              //是否为常量
     bool isArray;                                 //是否为数组
     bool isPtr;                                   //是否为指针
+    bool isLeft;                                  //能否作左值
     int arrayLength;                              //数组长度
     Var* initData;                                //初值
     bool isInited;                                //是否初始化
@@ -491,7 +526,9 @@ public:
         interCode.addInst(inst);
     }
 
-
+    bool isVoid() {
+        return type == KW_VOID;
+    }
 
 private:    
     string name;                                  //函数名
