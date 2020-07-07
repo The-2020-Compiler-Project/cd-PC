@@ -6,57 +6,57 @@
 #include<list>
 #include <ext/hash_map>
 using namespace __gnu_cxx;
-int lineLen = 0;//»º³åÇøÄÚÊı¾İ³¤¶È
-int readPos = -1;//¶ÁÈ¡Î»ÖÃ
-int lineNum = 1;//ĞĞºÅ
-int colNum = 0;//ÁĞºÅ
-char lastChar;//ÉÏÒ»¸ö×Ö·û
+int lineLen = 0;//ç¼“å†²åŒºå†…æ•°æ®é•¿åº¦
+int readPos = -1;//è¯»å–ä½ç½®
+int lineNum = 1;//è¡Œå·
+int colNum = 0;//åˆ—å·
+char lastChar;//ä¸Šä¸€ä¸ªå­—ç¬¦
 using namespace std;
 class Args
 {
 public:
-	static bool showChar;//ÏÔÊ¾×Ö·û
-	static bool showToken;//ÏÔÊ¾´Ê·¨¼ÇºÅ
-	static bool showSym;//ÏÔÊ¾·ûºÅ±í
-	static bool showIr;//ÏÔÊ¾ÖĞ¼ä´úÂë
-	static bool showOr;//ÏÔÊ¾ÓÅ»¯ºóµÄÖĞ¼ä´úÂë
-	static bool showBlock;//ÏÔÊ¾»ù±¾¿éºÍÁ÷Í¼¹ØÏµ
-	static bool showHelp;//ÏÔÊ¾°ïÖú
-	static bool opt;//ÊÇ·ñÖ´ĞĞÓÅ»¯
+	static bool showChar;//æ˜¾ç¤ºå­—ç¬¦
+	static bool showToken;//æ˜¾ç¤ºè¯æ³•è®°å·
+	static bool showSym;//æ˜¾ç¤ºç¬¦å·è¡¨
+	static bool showIr;//æ˜¾ç¤ºä¸­é—´ä»£ç 
+	static bool showOr;//æ˜¾ç¤ºä¼˜åŒ–åçš„ä¸­é—´ä»£ç 
+	static bool showBlock;//æ˜¾ç¤ºåŸºæœ¬å—å’Œæµå›¾å…³ç³»
+	static bool showHelp;//æ˜¾ç¤ºå¸®åŠ©
+	static bool opt;//æ˜¯å¦æ‰§è¡Œä¼˜åŒ–
 };
 enum Tag {
-	ERR,					//´íÎó£¬Òì³£
-	END,					//ÎÄ¼ş½áÊø±ê¼Ç
-	ID,						//±êÊ¶·û
-	KW_INT, KW_VOID,			//Êı¾İÀàĞÍ
-	COSNT,					//³£Á¿
-	NOT, LEA,				//µ¥Ä¿ÔËËã·û
-	ADD, SUB, MUL, DIV, MOD,	//ËãÊıÔËËã·û
-	INC, DEC,				//×Ô¼Ó×Ô¼õ
-	GT, GE, LT, LE, EQU, NEQU,	//±È½ÏÔËËã·û
-	AND, OR,					//Âß¼­ÔËËã·û
-	LPAREN, RPAREN,			//£¨£©
+	ERR,					//é”™è¯¯ï¼Œå¼‚å¸¸
+	END,					//æ–‡ä»¶ç»“æŸæ ‡è®°
+	ID,						//æ ‡è¯†ç¬¦
+	KW_INT, KW_VOID,			//æ•°æ®ç±»å‹
+	COSNT,					//å¸¸é‡
+	NOT, LEA,				//å•ç›®è¿ç®—ç¬¦
+	ADD, SUB, MUL, DIV, MOD,	//ç®—æ•°è¿ç®—ç¬¦
+	INC, DEC,				//è‡ªåŠ è‡ªå‡
+	GT, GE, LT, LE, EQU, NEQU,	//æ¯”è¾ƒè¿ç®—ç¬¦
+	AND, OR,					//é€»è¾‘è¿ç®—ç¬¦
+	LPAREN, RPAREN,			//ï¼ˆï¼‰
 	LBRACK, RBRACK,			//[]
 	LBRACE, RBRACE,			//{}
-	COMMA, COLON, SEMICON,	//¶ººÅ£¬Ã°ºÅ£¬·ÖºÅ
-	ASSIGN,					//¸³Öµ
+	COMMA, COLON, SEMICON,	//é€—å·ï¼Œå†’å·ï¼Œåˆ†å·
+	ASSIGN,					//èµ‹å€¼
 	KW_IF, KW_ELSE,			//if-else
-	KW_WHILE,				//whileÑ­»·
+	KW_WHILE,				//whileå¾ªç¯
 	KW_BREAK, KW_CONTINUE, KW_RETURN //break,continue,return
 };
-//´Ê·¨¼ÇºÅÀà
-//×÷Îª»ùÀà
+//è¯æ³•è®°å·ç±»
+//ä½œä¸ºåŸºç±»
 class Token
 {
 public:
-	Tag tag;	//ÄÚ²¿±êÇ©
-	Token(Tag t);	//¹¹Ôìº¯Êı
+	Tag tag;	//å†…éƒ¨æ ‡ç­¾
+	Token(Tag t);	//æ„é€ å‡½æ•°
 	virtual string toString();
 	virtual ~Token();
 };
 
-//ÒÔÏÂÀà¾ùÎªTokenµÄÅÉÉúÀà
-//±êÊ¶·û¼ÇºÅÀà
+//ä»¥ä¸‹ç±»å‡ä¸ºTokençš„æ´¾ç”Ÿç±»
+//æ ‡è¯†ç¬¦è®°å·ç±»
 class Id :public Token
 {
 public:
@@ -64,7 +64,7 @@ public:
 	Id(string n);
 	virtual string toString();
 };
-//Êı×Ö¼ÇºÅÀà
+//æ•°å­—è®°å·ç±»
 class Num :public Token
 {
 public:
@@ -73,43 +73,43 @@ public:
 	virtual string toString();
 
 };
-//ÅÉÉúÀàµ½´ËÎªÖ¹
+//æ´¾ç”Ÿç±»åˆ°æ­¤ä¸ºæ­¢
 class Scanner
 {
-	//ÎÄ¼şÖ¸Õë
-	char* fileName;//ÎÄ¼şÃû
-	FILE* file;//ÎÄ¼şÖ¸Õë
+	//æ–‡ä»¶æŒ‡é’ˆ
+	char* fileName;//æ–‡ä»¶å
+	FILE* file;//æ–‡ä»¶æŒ‡é’ˆ
 
-	//ÄÚ²¿×´Ì¬
-	static const int BUFLEN = 80;//É¨Ãè»º³åÇø³¤¶È
+	//å†…éƒ¨çŠ¶æ€
+	static const int BUFLEN = 80;//æ‰«æç¼“å†²åŒºé•¿åº¦
 	char line[BUFLEN];
-	int lineLen;//µ±Ç°ĞĞµÄ³¤¶È
-	int readPos;//¶ÁÈ¡µÄÎ»ÖÃ
-	char lastch;//ÉÏÒ»¸ö×Ö·û£¬Ö÷ÒªÓÃÓÚÅĞ¶Ï»»ĞĞÎ»ÖÃ	
+	int lineLen;//å½“å‰è¡Œçš„é•¿åº¦
+	int readPos;//è¯»å–çš„ä½ç½®
+	char lastch;//ä¸Šä¸€ä¸ªå­—ç¬¦ï¼Œä¸»è¦ç”¨äºåˆ¤æ–­æ¢è¡Œä½ç½®	
 
-	//¶ÁÈ¡×´Ì¬
-	int lineNum;//¼ÇÂ¼ĞĞºÅ
-	int colNum;//ÁĞºÅ
+	//è¯»å–çŠ¶æ€
+	int lineNum;//è®°å½•è¡Œå·
+	int colNum;//åˆ—å·
 
-	//ÏÔÊ¾×Ö·û
+	//æ˜¾ç¤ºå­—ç¬¦
 	void showChar(char ch);
 
 public:
 
-	//¹¹ÔìÓë³õÊ¼»¯
+	//æ„é€ ä¸åˆå§‹åŒ–
 	Scanner(char* name);
 	~Scanner();
 
-	//É¨Ãè
-	int scan();//»ùÓÚ»º³åÇøµÄ×Ö·ûÉ¨ÃèËã·¨,ÎÄ¼şÉ¨Ãè½ÓÊÜºó×Ô¶¯¹Ø±ÕÎÄ¼ş
+	//æ‰«æ
+	int scan();//åŸºäºç¼“å†²åŒºçš„å­—ç¬¦æ‰«æç®—æ³•,æ–‡ä»¶æ‰«ææ¥å—åè‡ªåŠ¨å…³é—­æ–‡ä»¶
 
-	//Íâ²¿½Ó¿Ú
-	char* getFile();//»ñÈ¡ÎÄ¼şÃû
-	int getLine();//»ñÈ¡ĞĞºÅ
-	int getCol();//»ñÈ¡ÁĞºÅ
+	//å¤–éƒ¨æ¥å£
+	char* getFile();//è·å–æ–‡ä»¶å
+	int getLine();//è·å–è¡Œå·
+	int getCol();//è·å–åˆ—å·
 
 };
-//¹Ø¼ü×Ö±íÀà
+//å…³é”®å­—è¡¨ç±»
 class Keywords
 {
 	struct string_hash {
@@ -119,29 +119,29 @@ class Keywords
 	};
 	hash_map<string, Tag> keywords;
 public:
-	Keywords();					//¹Ø¼ü×Ö±í³õÊ¼»¯
-	Tag getTag(string name);	//²âÊÔÊÇ·ñ¹Ø¼ü×Ö
+	Keywords();					//å…³é”®å­—è¡¨åˆå§‹åŒ–
+	Tag getTag(string name);	//æµ‹è¯•æ˜¯å¦å…³é”®å­—
 };
 
-//´Ê·¨·ÖÎöÆ÷
+//è¯æ³•åˆ†æå™¨
 
 class Lexer
 {
-	static Keywords keywords;//¹Ø¼ü×ÖÁĞ±í
+	static Keywords keywords;//å…³é”®å­—åˆ—è¡¨
 
-	Scanner& scanner;//É¨ÃèÆ÷
-	char ch;//¶ÁÈëµÄ×Ö·û
-	bool scan(char need = 0);//É¨ÃèÓëÆ¥Åä
+	Scanner& scanner;//æ‰«æå™¨
+	char ch;//è¯»å…¥çš„å­—ç¬¦
+	bool scan(char need = 0);//æ‰«æä¸åŒ¹é…
 
-	Token* token;//¼ÇÂ¼É¨ÃèµÄ´Ê·¨¼ÇºÅ
+	Token* token;//è®°å½•æ‰«æçš„è¯æ³•è®°å·
 
 public:
 	Lexer(Scanner& sc);
 	~Lexer();
-	Token* tokenize();//ÓĞÏŞ×Ô¶¯»úÆ¥Åä£¬´Ê·¨¼ÇºÅ½âÎö
+	Token* tokenize();//æœ‰é™è‡ªåŠ¨æœºåŒ¹é…ï¼Œè¯æ³•è®°å·è§£æ
 };
 
-//É¨ÃèÆ÷
+//æ‰«æå™¨
 
 
 #endif
