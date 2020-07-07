@@ -154,7 +154,7 @@ string Id::toString()
 
 //数字类的函数定义
 
-Num::Num(int v) :Token(COSNT), val(v)
+Num::Num(int v) :Token(CONST), val(v)
 {}
 
 string Num::toString()
