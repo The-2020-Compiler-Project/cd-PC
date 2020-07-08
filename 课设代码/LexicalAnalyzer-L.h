@@ -29,7 +29,7 @@ enum Tag {
 	END,					//文件结束标记
 	ID,						//标识符
 	KW_INT, KW_VOID,			//数据类型
-	COSNT,					//常量
+	CONST,					//常量
 	NOT, LEA,				//单目运算符
 	ADD, SUB, MUL, DIV, MOD,	//算数运算符
 	INC, DEC,				//自加自减
