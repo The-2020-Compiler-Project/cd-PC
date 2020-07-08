@@ -252,22 +252,33 @@ string GenIR::genLb()
 }
 
 // 数组索引语句
-Var* GenIR::genArray(Var* array, Var* index)
+Var* GenIR::genArray(Var* array, vector<int>& indexes)
 {
-    // TODO: 待加入多维索引，以及数组下标数量不对时直接报错
-    if (!array || !index) return NULL;
+    if (!array) return NULL;
     // 均为 void 类型
-    if (array->isVoid() || index->isVoid()) {
+    if (array->isVoid()) {
         SEMERROR(EXPR_IS_VOID);
         return NULL;
     }
     // 均为基本类型
-    if (array->isBase() || !index->isBase()) {
+    if (array->isBase()) {
         SEMERROR(ARR_TYPE_ERR);
-        return index;
+        return array;
     }
 
-    return genPtr(genAdd(array, index));
+    vector<int> dimensions = array->getDimension();
+    if (dimensions.size() != indexes.size()) {
+        SEMERROR(ARRAY_LEN_INVALID);
+        return NULL;
+    }
+
+    int tmp = 0;
+    for (int i=indexes.size()-1, product=1; i>=0; i--) {
+        tmp += indexes[i] * product;
+        product *= dimensions[i];
+    }
+
+    return genPtr(genAdd(array, new Var(tmp)));
 }
 
 // 函数的参数传递

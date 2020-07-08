@@ -99,7 +99,7 @@ public:
 
     Var* genAssign(Var* val);
 
-    Var* genArray(Var* array, Var* index);
+    Var* genArray(Var* array, vector<int>& indexes);
     Var* genCall(Fun* func, vector<Var*> & args);
     Var* genTwoOp(Var* lval, Tag opt, Var* rval);
     Var* genOneOpLeft(Tag opt, Var* val);
