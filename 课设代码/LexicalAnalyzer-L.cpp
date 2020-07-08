@@ -3,17 +3,6 @@
 #include <sstream>
 using namespace std;
 //词法记号标签
-/*
-	编译参数初始化
-*/
-bool Args::showChar = false;
-bool Args::showToken = false;
-bool Args::showSym = false;
-bool Args::showIr = false;
-bool Args::showOr = false;
-bool Args::showBlock = false;
-bool Args::showHelp = false;
-bool Args::opt = false;
 const char* tokenName[] =
 {
 	"error",//错误，异常，结束标记等
@@ -100,7 +89,6 @@ int Scanner::scan()
 	else if (ch != '\n')//不是换行
 		colNum++;//列号递增
 	lastch = ch;//记录上个字符
-	if (Args::showChar)showChar(ch);
 	return ch;
 }
 
