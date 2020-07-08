@@ -315,7 +315,7 @@ public:
     }
 
     //变量初始化
-    void setInit() {
+    bool setInit() {
         Var* init = initData;
         if(!init)
             return false;
