@@ -115,6 +115,14 @@ public:
         return currentFun;
     }
 
+    vector<int>& getScopePath() {
+        return scopePath;
+    } 
+
+    void setIr(GenIR* ir) {
+        inter = ir;
+    }
+    
     /******************************数据段**********************************/
 
     //获取全局变量
@@ -386,6 +394,11 @@ public:
     //是否为指针
     bool getPtr() {
         return isPtr;
+    }
+
+    //是否为引用
+    bool isRef() {
+        return !!ptr;
     }
 
     //设置指针
