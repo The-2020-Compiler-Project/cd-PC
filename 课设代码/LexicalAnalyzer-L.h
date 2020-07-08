@@ -12,18 +12,6 @@ int lineNum = 1;//行号
 int colNum = 0;//列号
 char lastChar;//上一个字符
 using namespace std;
-class Args
-{
-public:
-	static bool showChar;//显示字符
-	static bool showToken;//显示词法记号
-	static bool showSym;//显示符号表
-	static bool showIr;//显示中间代码
-	static bool showOr;//显示优化后的中间代码
-	static bool showBlock;//显示基本块和流图关系
-	static bool showHelp;//显示帮助
-	static bool opt;//是否执行优化
-};
 enum Tag {
 	ERR,					//错误，异常
 	END,					//文件结束标记
