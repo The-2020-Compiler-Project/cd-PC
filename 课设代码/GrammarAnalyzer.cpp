@@ -506,7 +506,7 @@ void Parser::LValOrFunc(string name){
         }
     }else{
         //ArrayParamTail();//不支持数组
-        //EqualOrMul();
+        EqualOrMul(name);
     }
 }
 
@@ -572,12 +572,15 @@ Var* Parser::Num()
 Var* Parser::UnaryExp()
 {
     Var *v;
-    if(match(ID)){
+    if(look->tag==ID){
         string name = ((Id *)look)->name;
+        move();
         if(match(LPAREN)){
             v=FuncRParams(name);
             if(match(RPAREN))
                 ;
+        }else {
+            v = symtab.getVar(name);
         }
     }else if(look->tag==ADD||look->tag==SUB||look->tag==NOT){
         Tag t=UnaryOp();
@@ -753,6 +756,7 @@ Var* Parser::NewLOrExp(Var* lval)
         result = ir.genTwoOp(lval, OR, rval);
         return NewLOrExp(result);
     }
+    return lval;
 }
 
 Var* Parser::ConstExp()
