@@ -263,13 +263,11 @@ public:
 
     //字符串转化
     string getRawStr() {
-
+        return "";
     }
 
     //获取特殊变量
-    static Var* getVoid() {
-        return SymTab::voidVar;
-    }
+    Var* getVoid();
 
     //输出变量信息
     void toString() {
