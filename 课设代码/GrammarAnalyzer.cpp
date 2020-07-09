@@ -753,6 +753,7 @@ Var* Parser::NewLOrExp(Var* lval)
         result = ir.genTwoOp(lval, OR, rval);
         return NewLOrExp(result);
     }
+    return lval;
 }
 
 Var* Parser::ConstExp()
