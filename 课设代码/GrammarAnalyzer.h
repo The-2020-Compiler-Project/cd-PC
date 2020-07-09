@@ -57,11 +57,11 @@ class Parser
     void ElseOpt(InterInst* _else,InterInst *exit);
     Var* ExpOpt();
     Var* FuncRParams(string name);
-    void EqualOrMul();
+    void EqualOrMul(string name);
     //条件式
     Var* LOrExp();
     //左值式
-    void LVal();
+    Var* LVal();
     //一元式
     Var* UnaryExp();
     Var* PrimaryExp();
