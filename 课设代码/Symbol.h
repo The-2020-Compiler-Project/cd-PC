@@ -85,6 +85,8 @@ public:
 
     //设置变量名
     void setName(string s) {
+        if(s == "")
+            s = GenIR::genLb;
         name = s;
     }
 
