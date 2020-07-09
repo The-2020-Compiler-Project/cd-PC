@@ -1,12 +1,10 @@
 #pragma once
 #include "common.h"
-#include <ext/hash_map>
 #include "Symbol.h"
 #include "GenInter.h"
 #include <unordered_map>
 #include <vector>
 #include <fstream>
-using namespace __gnu_cxx;
 
 class Var;
 
