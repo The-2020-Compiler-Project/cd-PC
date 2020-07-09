@@ -1,5 +1,5 @@
 #pragma once
-#include"lexicalanalyzer.h"
+#include"Lexicalanalyzer-L.h"
 #include <sstream>
 using namespace std;
 //词法记号标签
