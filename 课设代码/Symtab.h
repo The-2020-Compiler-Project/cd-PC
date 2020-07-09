@@ -4,6 +4,7 @@
 #include "Symbol.h"
 #include "GenInter.h"
 #include <unordered_map>
+#include <vector>
 #include <fstream>
 using namespace __gnu_cxx;
 
@@ -27,6 +28,7 @@ public:
         if(varTab.find(var->getName()) == varTab.end()) {
             varTab[var->getName()] = new vector<Var*>;
             varTab[var->getName()]->push_back(var);
+            varList.push_back(var->getName());
         }
         else {
             vector<Var*>& list = *varTab[var->getName()];
@@ -124,6 +126,23 @@ public:
     //获取全局变量
     vector<Var*> getGlbVars() {
         vector<Var*> glbVars;
+        for(int i = 0; i < varList.size(); i++) {
+            string varName = varList[i];
+            if(varName[0] == '<')
+                continue;
+            vector<Var*>& List = *varTab[varName];
+            for(int j = 0; j < (int)List.size(); j++) {
+                if(List[j]->getPath().size() == 1) {
+                    glbVars.push_back(List[j]);
+                    break;
+                }
+            }
+        }
+        return glbVars;
+    }
+
+    /*vector<Var*> getGlbVars() {
+        vector<Var*> glbVars;
         unordered_map<string, vector<Var*>*>::iterator it, varEnd = varTab.end();
         for(it = varTab.begin(); it != varEnd; it++) {
             string varName = it->first;
@@ -138,7 +157,7 @@ public:
             }
         }
         return glbVars;
-    }
+    }*/
 
     void genData(ofstream file) {
         vector<Var*> glbVars = getGlbVars();
@@ -167,6 +186,25 @@ public:
 	    this->inter=ir;
     }
 
+    //输出符号表信息
+    void toString() {
+        cout << "----------变量表----------\n";
+        for(int i = 0; i < (int)varList.size(); i++) {
+            string varName = varList[i];
+            vector<Var*>& List = *varTab[varName];
+            cout << varName << ":\n";
+            for(int j = 0; j < List.size(); j++) {
+                cout << '\t';
+                List[j]->toString();
+                cout << endl;
+            }
+        }
+        cout << "----------函数表----------\n";
+        for(int i = 0; i < (int)funList.size(); i++) {
+            funTab[funList[i]]->toString();
+        }
+    }
+    
 public:
     static Var* voidVar;
 
@@ -176,6 +214,7 @@ private:
     Fun* currentFun;                              //当前分析的函数
     int scopeNum;                                 //作用域编号
     vector<int> scopePath;                        //作用域的嵌套路径
+    vector<string> varList;                       //变量名
     vector<string> funList;                       //所有的函数名，按定义顺序存放
     GenIR* inter;                                 
 };

@@ -271,6 +271,31 @@ public:
         return SymTab::voidVar;
     }
 
+    //输出变量信息
+    void toString() {
+        cout << tokenName[type];
+        cout << " " << name;
+        if(isInited) {
+            cout << " = ";
+            switch(type) {
+                case KW_INT: cout << intVal; break;
+            }
+        }
+        cout << "; size=" << size << " scope=\"";
+        for(int i = 0; i < (int)scopePath.size(); i++) {
+            cout << "/" << scopePath[i];
+        }
+        cout << "\" ";
+        if(offset > 0)
+            cout << "addr=[ebp+" << offset << "]";
+        else if(offset < 0)
+            cout << "addr=[ebp" << offset << "]";
+        else if(name[0] != '<')
+            cout << "addr=<" << name << ">";
+        else
+            cout << "value=\'" << getVal() << "\'";
+    }
+    
 private:
     string name;                                  //变量名
     Tag type;                                     //变量类型
@@ -367,6 +392,27 @@ public:
 
     bool isVoid() {
         return type == KW_VOID;
+    }
+
+    void printInterCode() {
+        cout << "-------------<" << name << ">Start--------------\n";
+        interCode.toString();
+        cout << "--------------<" << name << ">End---------------\n";
+    }
+
+    //函数信息
+    void toString() {
+        cout << tokenName[type];
+        cout << " " << name;
+        cout << "(";
+        for(int i = 0; i < (int)parameter.size(); i++) {
+            cout << "<" << parameter[i]->getName() << ">";
+            if(i != (int)parameter.size() - 1)
+                cout << ",";
+        }
+        cout << ")";
+        cout << ":\n";
+        cout << "\t\tmaxDepth=" << maxDepth << endl;
     }
 
 private:    
