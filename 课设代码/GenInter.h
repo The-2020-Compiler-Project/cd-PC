@@ -1,0 +1,72 @@
+#pragma once
+#include "common.h"
+
+class GenIR
+{
+    static int lbNum;
+    SymTab &symtab;
+
+    vector< InterInst* > heads;
+    vector< InterInst* > tails;
+    void push(InterInst* head, InterInst* tail);
+    void pop();
+
+    // 函数调用
+    void genPara(Var* arg);
+
+    // 双目运算
+    Var* genAssign(Var* lvar, Var* rval);
+
+    Var* genAdd(Var* lval, Var* rval);
+    Var* genSub(Var* lval, Var* rval);
+    Var* twoOpExceptAddSub(Var* lval, Tag opt, Var* rval);
+
+    Var* genNot(Var* val);
+    Var* genMinus(Var* val);
+    Var* genPtr(Var* val);
+    Var* genIncLorDecL(Tag opt, Var* val);
+    Var* genIncRorDecR(Tag opt, Var* val);
+
+public:
+
+    GenIR(SymTab &tab);
+
+    Var* genAssign(Var* val);
+
+    Var* genArray(Var* array, vector<int>& indexes);
+    Var* genCall(Fun* func, vector<Var*> & args);
+    Var* genTwoOp(Var* lval, Tag opt, Var* rval);
+    Var* genOneOpLeft(Tag opt, Var* val);
+    Var* genOneOpRight(Var* val, Tag opt);
+
+    //产生复合语句
+    void genWhileHead(InterInst*& _while,InterInst*& _exit);//while循环头部
+    void genWhileCond(Var*cond,InterInst* _exit);//while条件
+    void genWhileTail(InterInst*& _while,InterInst*& _exit);//while尾部
+    void genDoWhileHead(InterInst*& _do,InterInst*& _exit);//do-while头部
+    void genDoWhileTail(Var*cond,InterInst* _do,InterInst* _exit);//do-while尾部
+    void genForHead(InterInst*& _for,InterInst*& _exit);//for循环头部
+    void genForCondBegin(Var*cond,InterInst*& _step,InterInst*& _block,InterInst* _exit);//for条件开始
+    void genForCondEnd(InterInst* _for,InterInst* _block);//for循环条件结束部分
+    void genForTail(InterInst*& _step,InterInst*& _exit);//for循环尾部
+    void genIfHead(Var*cond,InterInst*& _else);//if头部
+    void genIfTail(InterInst*& _else);//if尾部
+    void genElseHead(InterInst* _else,InterInst*& _exit);//else头部
+    void genElseTail(InterInst*& _exit);//else尾部
+    void genSwitchHead(InterInst*& _exit);//switch头部
+    void genSwitchTail(InterInst* _exit);//switch尾部
+    void genCaseHead(Var*cond,Var*lb,InterInst*& _case_exit);//case头部
+    void genCaseTail(InterInst* _case_exit);//case尾部
+
+    //产生特殊语句
+    void genBreak();//产生break语句
+    void genContinue();//产生continue语句
+    void genReturn(Var*ret);//产生return语句
+    bool genVarInit(Var*var);//产生变量初始化语句
+    void genFunHead(Fun*function);//产生函数入口语句
+    void genFunTail(Fun*function);//产生函数出口语句
+
+    //全局函数
+    static string genLb();//产生唯一的标签
+    static bool typeCheck(Var*lval,Var*rval);//检查类型是否可以转换
+};
