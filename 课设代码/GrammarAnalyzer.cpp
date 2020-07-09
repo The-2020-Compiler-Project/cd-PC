@@ -579,6 +579,8 @@ Var* Parser::UnaryExp()
             v=FuncRParams(name);
             if(match(RPAREN))
                 ;
+        }else {
+            v = symtab.getVar(name);
         }
     }else if(look->tag==ADD||look->tag==SUB||look->tag==NOT){
         Tag t=UnaryOp();
