@@ -506,7 +506,7 @@ void Parser::LValOrFunc(string name){
         }
     }else{
         //ArrayParamTail();//不支持数组
-        //EqualOrMul();
+        EqualOrMul(name);
     }
 }
 
@@ -572,8 +572,9 @@ Var* Parser::Num()
 Var* Parser::UnaryExp()
 {
     Var *v;
-    if(match(ID)){
+    if(look->tag==ID){
         string name = ((Id *)look)->name;
+        move();
         if(match(LPAREN)){
             v=FuncRParams(name);
             if(match(RPAREN))
