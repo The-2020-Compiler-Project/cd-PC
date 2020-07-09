@@ -84,7 +84,6 @@ Var* SymTab::getVar(string name) {
             }
         }
     }
-    if(res == nullptr)
     return res;
 }
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "common.h"
-#include <ext/hash_map>
-using namespace __gnu_cxx;
+#include <unordered_map>
 
 class Scanner
 {
@@ -38,12 +37,7 @@ public:
 
 class Keywords
 {
-	struct string_hash {
-		size_t operator()(const string& str) const {
-			return __stl_hash_string(str.c_str());
-		}
-	};
-	hash_map<string, Tag, string_hash> keywords;
+	unordered_map<string, Tag> keywords;
 public:
 	Keywords();					
 	Tag getTag(string name);	
