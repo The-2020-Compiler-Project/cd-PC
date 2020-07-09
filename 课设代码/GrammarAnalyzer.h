@@ -22,7 +22,7 @@ class Parser
     void ConstDeclTail(Tag t);
 
     //常数定义
-    void ConstInitVal(Var *v);
+    Var* ConstInitVal();
     void ConstInitValTail();
     void CVTTail();
     
@@ -34,7 +34,7 @@ class Parser
 
     //函数定义
     void FuncDef();
-    void FuncType();
+    Tag FuncType();
     
     //函数形参表
     Var* FuncFParam();
@@ -59,7 +59,7 @@ class Parser
     Var* FuncRParams(string name);
     void EqualOrMul();
     //条件式
-    void LOrExp();
+    Var* LOrExp();
     //左值式
     void LVal();
     //一元式
@@ -73,17 +73,17 @@ class Parser
     //加减
     Var* AddExp();
     //关系
-    void RelExp();
-    void NewRelExp();
+    Var* RelExp();
+    Var* NewRelExp(Var* lval);
     //相等性
-    void EqExp();
-    void NewEqExp();
+    Var* EqExp();
+    Var* NewEqExp(Var* lval);
     //逻辑
-    void LAndExp();
-    void NewLAndExp();
-    void NewLOrExp();
+    Var* LAndExp();
+    Var* NewLAndExp(Var* lval);
+    Var* NewLOrExp(Var* lval);
     //常量式
-    void ConstExp();
+    Var* ConstExp();
 
     //词法分析
     Lexer &lexer;//词法分析器

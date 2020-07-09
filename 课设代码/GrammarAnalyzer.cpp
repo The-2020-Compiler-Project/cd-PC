@@ -85,10 +85,10 @@ void Parser::VarOrFunc(Tag t,string name)
         }
     }
     else{
-        Var* initVal = NULL;
+        Var* init = NULL;
         if(match(EQU))
-            initVal = initVal();
-        Var*v=new Var(symtab.getScopePath(), t, name, initVal);
+            init = initVal();
+        Var*v=new Var(symtab.getScopePath(), t, name, init);
         symtab.addVar(v);
         VarDeclTail(t);
         if(match(SEMICON))
@@ -180,10 +180,10 @@ void Parser::ConstDef(Tag t)
     if(look->tag == ID){
         name = ((Id *)look)->name;
         move();
-        Var* initVal = NULL;
+        Var* init = NULL;
         if(match(EQU))
-            initVal = ConstInitVal();//不考虑数组，跳过Array
-        Var* v = new Var(symtab.getScopePath(), t, name, initVal);
+            init = ConstInitVal();//不考虑数组，跳过Array
+        Var* v = new Var(symtab.getScopePath(), t, name, init);
         symtab.addVar(v);
     }
 }
@@ -260,10 +260,10 @@ void Parser::VarDef(Tag t)
     if(look->tag == ID){
         name = ((Id*)look)->name;
         move();
-        Var* initVal = NULL;
+        Var* init = NULL;
         if(match(EQU))
-            initVal = initVal();
-        Var*v=new Var(symtab.getScopePath(), t, name, initVal);
+            init = initVal();
+        Var*v=new Var(symtab.getScopePath(), t, name, init);
         symtab.addVar(v);
     }
 }
@@ -313,7 +313,7 @@ void Parser::IVTTail()
 
 void Parser::FuncDef()
 {
-    tag t = FuncType();
+    Tag t = FuncType();
     if(match(ID)&&match(LPAREN)){
         vector<Var *>paralist;
         FuncFParams(paralist);
@@ -478,7 +478,8 @@ void Parser::Stmt()
 
 Var* Parser::ExpOpt(){
     if(match(SEMICON)){
-        return Var::getVoid();
+        //return Var::getVoid();
+        return NULL;
     }else
         return Exp();
 }
@@ -647,11 +648,11 @@ Var* Parser::NewAddExp(Var* lval)
     Var *result;
     if(match(ADD)){
         rval=MulExp();
-        result = ir.genAdd(lval, rval);
+        result = ir.genTwoOp(lval, ADD, rval);
         return NewAddExp(result);
     }else if(match(SUB)){
         rval=MulExp();
-        result = ir.genSub(lval, rval);
+        result = ir.genTwoOp(lval, SUB, rval);
         return NewAddExp(result);
     }
     return lval;
@@ -682,7 +683,7 @@ Var* Parser::NewRelExp(Var* lval)
     }else if(match(GE)){
         rval = AddExp();
         result = ir.genTwoOp(rval, GE, lval);
-        return = NewRelExp(result);
+        return NewRelExp(result);
     }
     return lval;
 }
