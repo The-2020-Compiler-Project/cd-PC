@@ -143,6 +143,8 @@ void Parser::Decl()
     }
     else if(look->tag==KW_INT){
         VarDecl();
+    }else{
+        VarDef(KW_INT);
     }
 }
 
@@ -504,14 +506,17 @@ void Parser::LValOrFunc(string name){
         }
     }else{
         //ArrayParamTail();//不支持数组
-        EqualOrMul();
+        //EqualOrMul();
     }
 }
 
-void Parser::EqualOrMul()
+void Parser::EqualOrMul(string name)
 {
     if(match(ASSIGN)){
-        Exp();
+        Var *array = symtab.getVar(name);
+        Var *rval = Exp();
+        ir.genTwoOp(array, ASSIGN, rval);
+        //ir.genAssign(Var * _lval, Var * _rval);
     }else{
         //NewMulExp();
         //NewAddExp();
@@ -528,11 +533,15 @@ Var* Parser::Cond()
     return LOrExp();
 }
 
-void Parser::LVal()
+Var* Parser::LVal()
 {
-    if(match(ID)){
-        ArrayParamTail();
+    Var *array = NULL;
+    if(look->tag==ID){
+        string name = ((Id *)look)->name;
+        array = symtab.getVar(name);
+        move();
     }
+    return array;
 }
 
 Var* Parser::PrimaryExp()
@@ -544,7 +553,7 @@ Var* Parser::PrimaryExp()
     }else if(look->tag==INTCONST){
         v=Num();
     }else{
-        LVal();
+        v=LVal();
     }
     return v;
 }
