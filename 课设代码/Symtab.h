@@ -10,6 +10,29 @@ using namespace __gnu_cxx;
 
 class SymTab {
 public:
+    SymTab() {
+        voidVar = new Var();
+        addVar(voidVar);
+        scopeNum = 0;
+        currentFun = nullptr;
+        inter = nullptr;
+        scopePath.push_back(0);
+    }
+
+    ~SymTab() {
+        unordered_map<string, Fun*>::iterator funIt, funEnd = funTab.end();
+        for(funIt = funTab.begin(); funIt != funEnd; funIt++) {
+            delete funIt->second;
+        }
+        unordered_map<string, vector<Var*>*>::iterator varIt, varEnd = varTab.end();
+        for(varIt = varTab.begin(); varIt != varEnd; varIt++) {
+            vector<Var*>& list = *varIt->second;
+            for(int i = 0; i < (int)list.size(); i++)
+                delete list[i];
+            delete &list;
+        }
+    }
+
     void enter() {
         scopeNum++;
         scopePath.push_back(scopeNum);
@@ -164,6 +187,53 @@ public:
         file << ".data" << endl;
         for(int i = 0; i < (int)glbVars.size(); i++) {
             Var* tmp = glbVars[i];
+            file << "\t.global " << tmp->getName() << endl;
+            if(!tmp->unInit()) {
+                file << tmp->getName() << ":\n";
+                //file << "\t" << tmp->getName() << ":\t" << ".word ";  //var:   .word 6
+                if(!tmp->getArray())
+                    file << "\t" << ".word" << " " << tmp->getVal() << endl;
+                else {
+                    vector<int> a = tmp->getArrayVal();
+                    file << a[0];
+                    for(int i = 1; i < a.size(); i++)
+                        file << ", " << a[i];
+                }
+            }
+            else {
+                file << "\t.comm " << tmp->getName() << "," << tmp->getSize() << endl;  //.bss
+            }
+        }
+    }
+
+    /*void genData(FILE* file) {
+        //生成数据段和bss段
+        fprintf(file, ".data\n");
+        vector<Var*> glbVars=getGlbVars();//获取所有全局变量
+        for(unsigned int i=0;i<glbVars.size();i++)
+        {
+            Var*var=glbVars[i];
+            fprintf(file, "\t.global %s\n",var->getName().c_str());//.global var
+            if(!var->unInit()){//变量初始化了,放在数据段
+                fprintf(file, "%s:\n", var->getName().c_str());//var:
+                if(!var->getArray()){//基本类型初始化 100 'a'
+                    fprintf(file, "\t.word %d\n", var->getVal());//.byte 65  .word 100
+                }
+                else{//字符指针初始化
+                    //fprintf(file, "\t.word %s\n",var->getPtrVal().c_str());//.word .L0
+                }
+            }
+            else{//放在bss段
+                fprintf(file, "\t.comm %s,%d\n", var->getName().c_str(), var->getSize());//.comm var,4
+            }
+        }
+    }*/
+
+    /*void genData(ofstream file) {
+        vector<Var*> glbVars = getGlbVars();
+        file << ".data" << endl;
+        for(int i = 0; i < (int)glbVars.size(); i++) {
+            Var* tmp = glbVars[i];
             if(!tmp->unInit()) {
                 file << "\t" << tmp->getName() << ":\t" << ".word ";  //var:   .word 6
                 if(!tmp->getArray())
@@ -179,11 +249,10 @@ public:
                 file << "\t.comm " << tmp->getName() << "," << tmp->getSize() << endl;  //.bss
             }            
         }
-    }
+    }*/
 
-    void SymTab::setIr(GenIR*ir)
-    {
-	    this->inter=ir;
+    void setIr(GenIR*ir) {
+	    this->inter = ir;
     }
 
     //输出符号表信息
@@ -205,8 +274,14 @@ public:
         }
     }
     
+    void printInterCode() {
+        for(int i = 0; i < (int)funList.size(); i++){
+            funTab[funList[i]]->printInterCode();
+        }
+    }
+
 public:
-    static Var* voidVar;
+    static Var* voidVar = nullptr;
 
 private:
     unordered_map<string, vector<Var*>*> varTab;  //变量表，值为同名变量链
