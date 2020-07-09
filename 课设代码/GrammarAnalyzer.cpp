@@ -38,15 +38,17 @@ void Parser::CompUnit()
     string name = "";
     if(match(KW_INT)){
         t = KW_INT;
-        if(match(ID)){
+        if(look->tag == ID){
             name = ((Id *)look)->name;
+            move();
             VarOrFunc(t,name);
             UnitTail();
         }
     }else if(match(KW_VOID)){
         t = KW_VOID;
-        if(match(ID)){
+        if(look->tag == ID){
             name = ((Id *)look)->name;
+            move();
             if(match(LPAREN)){
                 symtab.enter();
                 vector<Var *> paraList;//参数列表
@@ -70,14 +72,7 @@ void Parser::CompUnit()
 
 void Parser::VarOrFunc(Tag t,string name)
 {
-    if(look->tag==LBRACK){
-        Var *v = Array(t, name);
-        VardefTail(v);
-        symtab.addVar(v);
-        VarDeclTail(t);
-        if(match(SEMICON))
-            ;
-    }else if(match(LPAREN)){
+    if(match(LPAREN)){
         symtab.enter();
         vector<Var *> paraList;
         FuncFParams(paraList);
@@ -88,6 +83,16 @@ void Parser::VarOrFunc(Tag t,string name)
             symtab.endDefFun();
             symtab.leave();
         }
+    }
+    else{
+        Var* initVal = NULL;
+        if(match(EQU))
+            initVal = initVal();
+        Var*v=new Var(symtab.getScopePath(), t, name, initVal);
+        symtab.addVar(v);
+        VarDeclTail(t);
+        if(match(SEMICON))
+            return;
     }
 }
 
@@ -103,15 +108,17 @@ void Parser::UnitTail()
         UnitTail();
     }else if(match(KW_INT)){
         t = KW_INT;
-        if(match(ID)){
+        if(look->tag == ID){
             name = ((Id *)look)->name;
+            move();
             VarOrFunc(t,name);
             UnitTail();
         }
     }else if(match(KW_VOID)){
         t = KW_VOID;
-        if(match(ID)){
+        if(look->tag == ID){
             name = ((Id *)look)->name;
+            move();
             if(match(LPAREN)){
                 symtab.enter();
                 vector<Var *> paralist;
@@ -170,15 +177,19 @@ Tag Parser::Btype()
 void Parser::ConstDef(Tag t)
 {
     string name = "";
-    if(match(ID)){
+    if(look->tag == ID){
         name = ((Id *)look)->name;
-        Var*v=Array(t,name);
+        move();
+        Var* initVal = NULL;
         if(match(EQU))
-            ConstInitVal(v);
+            initVal = ConstInitVal();//不考虑数组，跳过Array
+        Var* v = new Var(symtab.getScopePath(), t, name, initVal);
         symtab.addVar(v);
     }
 }
 
+
+/*————————无用函数——————————*/
 Var* Parser::Array(Tag t,string name)
 {
     //先不考虑数组
@@ -190,18 +201,22 @@ Var* Parser::Array(Tag t,string name)
     else
         return new Var(symtab.getScopePath(), t, name, NULL);
 }
+/*————————无用函数——————————*/
 
-void Parser::ConstInitVal(Var*v)
+
+Var* Parser::ConstInitVal()
 {
     if(match(LBRACE)){
         ConstInitValTail();
         if(match(RBRACE))
-            ;
+            return NULL;
     }else{
-        ConstExp();
+        return ConstExp();
     }
 }
 
+
+/*————————无用函数——————————*/
 void Parser::ConstInitValTail()
 {
     if(look->tag==RBRACE)
@@ -219,6 +234,8 @@ void Parser::CVTTail()
         CVTTail();
     }
 }
+/*————————无用函数——————————*/
+
 
 void Parser::VarDecl()
 {
@@ -240,13 +257,19 @@ void Parser::VarDeclTail(Tag t)
 void Parser::VarDef(Tag t)
 {
     string name = "";
-    if(match(ID)){
-        Var*v=Array(t,name);
-        VardefTail(v);
+    if(look->tag == ID){
+        name = ((Id*)look)->name;
+        move();
+        Var* initVal = NULL;
+        if(match(EQU))
+            initVal = initVal();
+        Var*v=new Var(symtab.getScopePath(), t, name, initVal);
         symtab.addVar(v);
     }
 }
 
+
+/*————————无用函数——————————*/
 void Parser::VardefTail(Var* v)
 {
     Var *initV = NULL;
@@ -255,6 +278,8 @@ void Parser::VardefTail(Var* v)
         initV=initVal();
     }
 }
+/*————————无用函数——————————*/
+
 
 Var* Parser::initVal()
 {
@@ -266,6 +291,8 @@ Var* Parser::initVal()
         return Exp();
 }
 
+
+/*————————无用函数——————————*/
 void Parser::initValTail()
 {
     if(look->tag==RBRACE)
@@ -286,7 +313,7 @@ void Parser::IVTTail()
 
 void Parser::FuncDef()
 {
-    FuncType();
+    tag t = FuncType();
     if(match(ID)&&match(LPAREN)){
         vector<Var *>paralist;
         FuncFParams(paralist);
@@ -295,12 +322,17 @@ void Parser::FuncDef()
     }
 }
 
-void Parser::FuncType()
+Tag Parser::FuncType()
 {
+    Tag t = KW_INT;
     if(look->tag==KW_VOID||look->tag==KW_INT){
+        t = look->tag;
         move();
     }
+    return t;
 }
+/*————————无用函数——————————*/
+
 
 void Parser::FuncFParams(vector<Var *>&list)
 {
@@ -326,8 +358,9 @@ Var* Parser::FuncFParam()
 {
     Tag t = Btype();
     string name = "";
-    if(match(ID)){
+    if(look->tag == ID){
         name = ((Id *)look)->name;
+        move();
         return ArrayParam(t,name);
     }
 }
@@ -342,6 +375,8 @@ Var* Parser::ArrayParam(Tag t,string name)
     }
 }
 
+
+/*————————无用函数——————————*/
 void Parser::ArrayParamTail(){
     if(match(LBRACK)){
         Exp();
@@ -350,6 +385,8 @@ void Parser::ArrayParamTail(){
         }
     }
 }
+/*————————无用函数——————————*/
+
 
 void Parser::Block()
 {
@@ -375,8 +412,9 @@ void Parser::BlockItem()
 
 void Parser::Stmt()
 {
-    if(match(ID)){
+    if(look->tag == ID){
         string name=((Id *)look)->name;
+        move();
         LValOrFunc(name);
         if(match(SEMICON))
             ;
@@ -464,7 +502,7 @@ void Parser::LValOrFunc(string name){
             lval=NewAddExp(lval);
         }
     }else{
-        ArrayParamTail();
+        //ArrayParamTail();//不支持数组
         EqualOrMul();
     }
 }
@@ -486,7 +524,7 @@ Var* Parser::Exp()
 
 Var* Parser::Cond()
 {
-    LOrExp();
+    return LOrExp();
 }
 
 void Parser::LVal()
@@ -609,85 +647,104 @@ Var* Parser::NewAddExp(Var* lval)
     Var *result;
     if(match(ADD)){
         rval=MulExp();
-        result = ir.genTwoOp(lval, ADD, rval);
+        result = ir.genAdd(lval, rval);
         return NewAddExp(result);
     }else if(match(SUB)){
         rval=MulExp();
-        result = ir.genTwoOp(lval, SUB, rval);
+        result = ir.genSub(lval, rval);
         return NewAddExp(result);
     }
     return lval;
 }
 
-void Parser::RelExp()
+Var* Parser::RelExp()
 {
-    AddExp();
-    NewRelExp();
+    Var* lval = AddExp();
+    return NewRelExp(lval);
 }
 
-void Parser::NewRelExp()
+Var* Parser::NewRelExp(Var* lval)
 {
+    Var *rval;
+    Var *result;
     if(match(LT)){
-        AddExp();
-        NewRelExp();
+        rval = AddExp();
+        result = ir.genTwoOp(lval, LT, rval);
+        return NewRelExp(result);
     }else if(match(GT)){
-        AddExp();
-        NewRelExp();
+        rval = AddExp();
+        result = ir.genTwoOp(lval, GT, rval);
+        return NewRelExp(result);
     }else if(match(LE)){
-        AddExp();
-        NewRelExp();
+        rval = AddExp();
+        result = ir.genTwoOp(lval, LE, rval);
+        return NewRelExp(result);
     }else if(match(GE)){
-        AddExp();
-        NewRelExp();
+        rval = AddExp();
+        result = ir.genTwoOp(rval, GE, lval);
+        return = NewRelExp(result);
     }
+    return lval;
 }
 
-void Parser::EqExp()
+Var* Parser::EqExp()
 {
-    RelExp();
-    NewEqExp();
+    Var* lval = RelExp();
+    return NewEqExp(lval);
 }
 
-void Parser::NewEqExp()
-{   
+Var* Parser::NewEqExp(Var* lval)
+{
+    Var *rval;
+    Var *result;
     if(match(EQU)){
-        RelExp();
-        NewEqExp();
+        rval = RelExp();
+        result = ir.genTwoOp(lval, EQU, rval);
+        return NewEqExp(result);
     }else if(match(NEQU)){
-        RelExp();
-        NewEqExp();
+        rval = RelExp();
+        result = ir.genTwoOp(lval, NEQU, rval);
+        return NewEqExp(result);
     }
+    return lval;
 }
 
-void Parser::LAndExp()
+Var* Parser::LAndExp()
 {
-    EqExp();
-    NewLAndExp();
+    Var* lval = EqExp();
+    return NewLAndExp(lval);
 }
 
-void Parser::NewLAndExp()
+Var* Parser::NewLAndExp(Var* lval)
 {
+    Var *rval;
+    Var *result;
     if(match(AND)){
-        EqExp();
-        NewLAndExp();
+        rval = EqExp();
+        result = ir.genTwoOp(lval, AND, rval);
+        return NewLAndExp(result);
     }
+    return lval;
 }
 
-void Parser::LOrExp()
+Var* Parser::LOrExp()
 {
-    LAndExp();
-    NewLOrExp();
+    Var * lval = LAndExp();
+    return NewLOrExp(lval);
 }
 
-void Parser::NewLOrExp()
+Var* Parser::NewLOrExp(Var* lval)
 {
+    Var *rval;
+    Var *result;
     if(match(OR)){
-        LAndExp();
-        NewLOrExp();
+        rval = LAndExp();
+        result = ir.genTwoOp(lval, OR, rval);
+        return NewLOrExp(result);
     }
 }
 
-void Parser::ConstExp()
+Var* Parser::ConstExp()
 {
-    AddExp();
+    return AddExp();
 }
