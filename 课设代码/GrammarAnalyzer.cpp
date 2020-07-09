@@ -261,7 +261,7 @@ void Parser::VarDef(Tag t)
         name = ((Id*)look)->name;
         move();
         Var* init = NULL;
-        if(match(EQU))
+        if(match(ASSIGN))
             init = initVal();
         Var*v=new Var(symtab.getScopePath(), t, name, init);
         symtab.addVar(v);
@@ -634,6 +634,7 @@ Var* Parser::NewMulExp(Var*lval)
         result = ir.genTwoOp(lval, MOD, rval);
         return NewMulExp(result);
     }
+    return lval;
 }
 
 Var* Parser::AddExp()
