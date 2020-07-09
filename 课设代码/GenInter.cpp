@@ -75,8 +75,8 @@ Var* GenIR::genCall(Fun* function, vector<Var*>& args)
     } else {
         // 函数返回值可能作为右值
         Var* ret = new Var(symtab.getScopePath(), function->getType(), false);
-        symtab.addInst(new InterInst(OP_CALL, function, ret));
         symtab.addVar(ret);
+        symtab.addInst(new InterInst(OP_CALL, function, ret));
         return ret;
     }
 }
