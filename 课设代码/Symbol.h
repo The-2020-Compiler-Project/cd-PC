@@ -267,7 +267,7 @@ public:
     }
 
     //获取特殊变量
-    Var* getVoid();
+    static Var* getVoid();
 
     //输出变量信息
     void toString() {
