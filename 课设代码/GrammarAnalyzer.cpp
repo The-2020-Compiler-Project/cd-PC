@@ -460,6 +460,7 @@ void Parser::Stmt()
         ir.genWhileHead(_while, _exit);
         if(match(LPAREN)){
             Var *cond = Cond();
+            ir.genWhileCond(cond, _exit);
             if(match(RPAREN)){
                 Stmt();
             }
