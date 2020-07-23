@@ -59,7 +59,7 @@ public:
         setLeft(false);
     }
 
-    //临时变量（会有数组吗？）
+    //临时变量
     Var(vector<int>& scope, Tag t, bool isarray) {
         clear();
         scopePath = scope;
@@ -130,6 +130,7 @@ public:
             return;
         }
         isArray = true;
+        isLeft = false;
         arrayLength = sumLen;
         size *= arrayLength;                   //总大小=长度*类型大小
     }
