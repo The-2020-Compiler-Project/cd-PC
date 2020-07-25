@@ -2,38 +2,38 @@
 
 const char* Plat::regName[regNum] = {
 		"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"
-		//,"r8"//���ڼ��ز�����1,�������ʽ���
-		//,"r9"//���ڼ��ز�����2,д�ر���ʽ���,����������ǩ��ַ
-		//,"r10"//���ڱ���˷��������Ȼmul r8,r8,r9Ҳ������ִ�У����Ǳ��⽻�������ʾ����
-		//,"fp"//r11,�ֲ�����Ѱַ
-		//,"ip"//"r12"����ʱ�Ĵ���
-		//,"sp"//r13��ջָ��
-		//,"lr"//r14�����ӼĴ���
-		//,"pc"//r15�����������
+		//,"r8"//用于加载操作数1,保存表达式结果
+		//,"r9"//用于加载操作数2,写回表达式结果,立即数，标签地址
+		//,"r10"//用于保存乘法结果，虽然mul r8,r8,r9也能正常执行，但是避免交叉编译提示错误！
+		//,"fp"//r11,局部变量寻址
+		//,"ip"//"r12"，临时寄存器
+		//,"sp"//r13，栈指针
+		//,"lr"//r14，链接寄存器
+		//,"pc"//r15，程序计数器
 };
 
 /*
-	ѭ��������λ
+	循环左移两位
 */
 void Plat::roundLeftShiftTwoBit(unsigned int& num)
 {
-	unsigned int overFlow = num & 0xc0000000;//ȡ���Ƽ����������λ
-	num = (num << 2) | (overFlow >> 30);//���������׷�ӵ�β��
+	unsigned int overFlow = num & 0xc0000000;//取左移即将溢出的两位
+	num = (num << 2) | (overFlow >> 30);//将溢出部分追加到尾部
 }
 
 /*
-	�ж�num�Ƿ��ǳ�������ʽ��8λ����ѭ������ż��λ�õ�
+	判断num是否是常数表达式，8位数字循环右移偶数位得到
 */
 bool Plat::__constExpr(unsigned int num)
 {
 	for (int i = 0; i < 16; i++) {
-		if (num <= 0xff)return true;//��Чλͼ
-		else roundLeftShiftTwoBit(num);//ѭ������2λ
+		if (num <= 0xff)return true;//有效位图
+		else roundLeftShiftTwoBit(num);//循环左移2位
 	}
 }
 
 /*
-	ͬʱ���������͸���
+	同时处理正数和负数
 */
 bool Plat::constExpr(int num)
 {
@@ -41,7 +41,7 @@ bool Plat::constExpr(int num)
 }
 
 /*
-	�ж��Ƿ��ǺϷ���ƫ��(-4096,4096)
+	判定是否是合法的偏移(-4096,4096)
 */
 bool Plat::isDisp(int num)
 {
@@ -49,7 +49,7 @@ bool Plat::isDisp(int num)
 }
 
 /*
-	�ж��Ƿ��ǺϷ��ļĴ�����
+	判断是否是合法的寄存器名
 */
 bool Plat::isReg(string s)
 {

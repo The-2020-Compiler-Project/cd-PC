@@ -3,24 +3,24 @@
 
 class Plat {
 public:
-	static bool constExpr(int num);//Í¬Ê±´¦ÀíÕıÊıºÍ¸ºÊı
-	static bool isDisp(int num);//ÅĞ¶¨ÊÇ·ñÊÇºÏ·¨µÄÆ«ÒÆ
-	static bool isReg(string s);//ÅĞ¶ÏÊÇ·ñÊÇºÏ·¨µÄ¼Ä´æÆ÷Ãû
+	static bool constExpr(int num);//åŒæ—¶å¤„ç†æ­£æ•°å’Œè´Ÿæ•°
+	static bool isDisp(int num);//åˆ¤å®šæ˜¯å¦æ˜¯åˆæ³•çš„åç§»
+	static bool isReg(string s);//åˆ¤æ–­æ˜¯å¦æ˜¯åˆæ³•çš„å¯„å­˜å™¨å
 	/*
-		½øÕ»Ö¸ÁîĞòÁĞ:
+		è¿›æ ˆæŒ‡ä»¤åºåˆ—:
 			mov ip,sp
 			stmfd sp!,{fp,ip,lr,pc}
 			sub fp,ip,#4
-		³öÕ»Ö¸ÁîĞòÁĞ£º
+		å‡ºæ ˆæŒ‡ä»¤åºåˆ—ï¼š
 			ldmea fp,{fp,sp,pc}
-		Õ»»ùÖ·fpÖ¸Ïòpc£¬¼ÌĞøÈëÕ»ĞèÒªÔÚÆ«ÒÆ12×Ö½Ú»ù´¡Ö®ÉÏ£¡
+		æ ˆåŸºå€fpæŒ‡å‘pcï¼Œç»§ç»­å…¥æ ˆéœ€è¦åœ¨åç§»12å­—èŠ‚åŸºç¡€ä¹‹ä¸Šï¼
 	*/
-	static const int regNum = 8;//¿ÉÊ¹ÓÃµÄÍ¨ÓÃ¼Ä´æÆ÷µÄ¸öÊır0-r7
-	static const char* regName[regNum];//¿ÉÒÔÊ¹ÓÃµÄÍ¨ÓÃ¼Ä´æÆ÷µÄ¸öÊı
-	static const int stackBase = 12;//²»¼Ó±£»¤ÏÖ³¡µÄÕ»»ùÖ·=12
-	static const int stackBase_protect = 12 + regNum * 4;//¼Ó±£»¤ÏÖ³¡µÄÕ»»ùÖ·=12+sizeof({r0-r7})=44
+	static const int regNum = 8;//å¯ä½¿ç”¨çš„é€šç”¨å¯„å­˜å™¨çš„ä¸ªæ•°r0-r7
+	static const char* regName[regNum];//å¯ä»¥ä½¿ç”¨çš„é€šç”¨å¯„å­˜å™¨çš„ä¸ªæ•°
+	static const int stackBase = 12;//ä¸åŠ ä¿æŠ¤ç°åœºçš„æ ˆåŸºå€=12
+	static const int stackBase_protect = 12 + regNum * 4;//åŠ ä¿æŠ¤ç°åœºçš„æ ˆåŸºå€=12+sizeof({r0-r7})=44
 
 private:
-	static void roundLeftShiftTwoBit(unsigned int& num);//Ñ­»·×óÒÆÁ½Î»
-	static bool __constExpr(unsigned int num);//ÅĞ¶ÏnumÊÇ·ñÊÇ³£Êı±í´ïÊ½£¬8Î»Êı×ÖÑ­»·ÓÒÒÆÅ¼ÊıÎ»µÃµ½
+	static void roundLeftShiftTwoBit(unsigned int& num);//å¾ªç¯å·¦ç§»ä¸¤ä½
+	static bool __constExpr(unsigned int num);//åˆ¤æ–­numæ˜¯å¦æ˜¯å¸¸æ•°è¡¨è¾¾å¼ï¼Œ8ä½æ•°å­—å¾ªç¯å³ç§»å¶æ•°ä½å¾—åˆ°
 };
