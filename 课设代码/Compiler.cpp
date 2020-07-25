@@ -21,4 +21,6 @@ void Compiler::compile(char*file)
 	//中间结果
 	symtab.toString();//输出符号表
 	symtab.printInterCode();//输出中间代码
+	//生成汇编代码
+	symtab.genAsm(file);
 }

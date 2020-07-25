@@ -274,9 +274,9 @@ void SymTab::printInterCode() {
 
 void SymTab::genAsm(char* fileName) {
     string newName = fileName;
-    int pos = newName.rfind(".c");
-    if(pos > 0 && pos == newName.length() - 2){
-        newName.replace(pos, 2, ".s");
+    int pos = newName.rfind(".sysy");
+    if(pos > 0 && pos == newName.length() - 5){
+        newName.replace(pos, 5, ".s");
     }
     else newName = newName + ".s";
     FILE* file = fopen(newName.c_str(), "w");//创建输出文件

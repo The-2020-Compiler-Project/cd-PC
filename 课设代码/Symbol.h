@@ -6,6 +6,7 @@
 #include "GenInter.h"
 #include "Symtab.h"
 #include "platform.h"
+#include "selector.h"
 
 class Var {
 public:
@@ -319,11 +320,6 @@ public:
         size = 4;
     }
 
-    //是否为指针
-    bool getPtr() {
-        return isPtr;
-    }
-
     //设置指针
     void setPointer(Var* ptr) {
         this->ptr = ptr;
@@ -370,11 +366,6 @@ public:
         inMem = false;
     }
 
-    //字符串转化
-    string getRawStr() {
-        return "";
-    }
-
     //获取特殊变量
     static Var* getVoid();
 
@@ -410,6 +401,12 @@ public:
         else
             cout << "value=\'" << getVal() << "\'";
     }
+
+    bool isChar() {return false;}
+
+    //寄存器分配信息
+    int regId;                                    //分配的寄存器编号，-1表示分配在内存
+    bool inMem;                                   //被取地址的变量的标记，不分配寄存器
     
 private:
     string name;                                  //变量名
@@ -434,10 +431,6 @@ private:
     //数据流分析
     int index;                                    //列表索引
     bool live;                                    //活跃性
-
-    //寄存器分配信息
-    int regId;                                    //分配的寄存器编号，-1表示分配在内存
-    bool inMem;                                   //被取地址的变量的标记，不分配寄存器
 };
 
 /*****************************************************************
@@ -541,7 +534,7 @@ public:
         vector<InterInst*> code;
         code = interCode.getCode();
         const char* pname = name.c_str();
-        fprintf(file, "#函数%s代码\n", pname);
+        fprintf(file, "#Code of %s Function\n", pname);
         fprintf(file, "\t.global %s\n", pname);//.global fun\n
         fprintf(file, "%s:\n", pname);//fun:\n
         ILoc il;//ILOC代码
