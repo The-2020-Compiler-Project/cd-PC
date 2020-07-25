@@ -13,10 +13,12 @@ SymTab::SymTab() {
 }
 
 SymTab::~SymTab() {
+    //清楚函数
     unordered_map<string, Fun*>::iterator funIt, funEnd = funTab.end();
     for(funIt = funTab.begin(); funIt != funEnd; funIt++) {
         delete funIt->second;
     }
+    //清楚变量
     unordered_map<string, vector<Var*>*>::iterator varIt, varEnd = varTab.end();
     for(varIt = varTab.begin(); varIt != varEnd; varIt++) {
         vector<Var*>& list = *varIt->second;
@@ -24,23 +26,27 @@ SymTab::~SymTab() {
             delete list[i];
         delete &list;
     }
+    //清除字符串
+    unordered_map<string, Var*>::iterator strIt, strEnd = strTab.end();
+    for (strIt = strTab.begin(); strIt != strEnd; strIt++)
+        delete strIt->second;
 }
 
-void SymTab:: enter() {
+void SymTab::enter() {
     scopeNum++;
     scopePath.push_back(scopeNum);
     if(currentFun != nullptr)
         currentFun->enterScope();
 }
 
-void SymTab:: leave() {
+void SymTab::leave() {
     scopePath.pop_back();
     if(currentFun != nullptr)
         currentFun->leaveScope();
 }
 
 //添加变量
-void SymTab:: addVar(Var* var) {
+void SymTab::addVar(Var* var) {
     if(varTab.find(var->getName()) == varTab.end()) {
         varTab[var->getName()] = new vector<Var*>;
         varTab[var->getName()]->push_back(var);
@@ -53,7 +59,7 @@ void SymTab:: addVar(Var* var) {
             if(list[i]->getPath().back() == var->getPath().back())
                 break;
         }
-        if(i == list.size() || var->getName() == "<int>")    //数据类型只有int
+        if(i == list.size() || var->getName()[0] == '<')    //数据类型只有int
             list.push_back(var);
         else {
             delete var;
@@ -65,6 +71,10 @@ void SymTab:: addVar(Var* var) {
         if(currentFun && flag)
             currentFun->locate(var);
     }
+}
+
+void SymTab::addStr(Var* v) {
+    strTab[v->getName()] = v;
 }
 
 //获取变量
@@ -88,7 +98,7 @@ Var* SymTab::getVar(string name) {
 }
 
 //定义函数
-void SymTab:: defFun(Fun* fun) {
+void SymTab::defFun(Fun* fun) {
     string n = fun->getName();
     if(funTab.find(n) == funTab.end()) {
         funTab[n] = fun;
@@ -103,16 +113,18 @@ void SymTab:: defFun(Fun* fun) {
 }
 
 //结束定义函数
-void SymTab:: endDefFun() {
+void SymTab::endDefFun() {
     inter->genFunTail(currentFun);            //生成函数出口代码
     currentFun = nullptr;                     //复位
 }
 
 //添加一条中间代码
-void SymTab:: addInst(InterInst *inst)
+void SymTab::addInst(InterInst *inst)
 {
-    if(currentFun)currentFun->addInst(inst);
-    else delete inst;
+    if(currentFun)
+        currentFun->addInst(inst);
+    else 
+        delete inst;
 }
 
 //获取函数对象
@@ -198,7 +210,14 @@ vector<Var*> SymTab::getGlbVars() {
     }
 }*/
 
-void SymTab:: genData(FILE* file) {
+void SymTab::genData(FILE* file) {
+    fprintf(file, ".section .rodata\n");
+    unordered_map<string, Var*>::iterator strIt, strEnd = strTab.end();
+    for (strIt = strTab.begin(); strIt != strEnd; strIt++) {
+        Var* str = strIt->second;//常量字符串变量
+        fprintf(file, "%s:\n", str->getName().c_str());//var:
+        fprintf(file, "\t.ascii \"%s\"\n", str->getRawStr().c_str());//.ascii "abc\000"
+    }
     //生成数据段和bss段
     fprintf(file, ".data\n");
     vector<Var*> glbVars = getGlbVars();//获取所有全局变量
@@ -207,11 +226,11 @@ void SymTab:: genData(FILE* file) {
         fprintf(file, "\t.global %s\n",var->getName().c_str());//.global var
         if(!var->unInit()){//变量初始化了,放在数据段
             fprintf(file, "%s:\n", var->getName().c_str());//var:
-            if(!var->getArray()){//基本类型初始化 100 'a'
+            if(var->isBase()){//基本类型初始化 100 'a'
                 fprintf(file, "\t.word %d\n", var->getVal());//.byte 65  .word 100
             }
             else{//字符指针初始化
-                //fprintf(file, "\t.word %s\n",var->getPtrVal().c_str());//.word .L0
+                fprintf(file, "\t.word %s\n",var->getPtrVal().c_str());//.word .L0
             }
         }
         else{//放在bss段
@@ -220,7 +239,7 @@ void SymTab:: genData(FILE* file) {
     }
 }
 
-void SymTab:: setIr(GenIR*ir) {
+void SymTab::setIr(GenIR*ir) {
     this->inter=ir;
 }
 
@@ -237,35 +256,39 @@ void SymTab:: toString() {
             cout << endl;
         }
     }
+    cout << "----------串表-----------\n";
+    unordered_map<string, Var*>::iterator strIt, strEnd = strTab.end();
+    for (strIt = strTab.begin(); strIt != strEnd; strIt++)
+        cout << strIt->second->getName() << "=" << strIt->second->getStrVal() << endl;
     cout << "----------函数表----------\n";
     for(int i = 0; i < (int)funList.size(); i++) {
         funTab[funList[i]]->toString();
     }
 }
 
-void SymTab:: printInterCode() {
+void SymTab::printInterCode() {
     for(int i = 0; i < (int)funList.size(); i++){
         funTab[funList[i]]->printInterCode();
     }
 }
 
-/*void SymTab:: genAsm(char* fileName) {
-    string newName=fileName;
+void SymTab::genAsm(char* fileName) {
+    string newName = fileName;
     int pos = newName.rfind(".c");
-    if(pos>0&&pos==newName.length()-2){
-        newName.replace(pos,2,".s");
+    if(pos > 0 && pos == newName.length() - 2){
+        newName.replace(pos, 2, ".s");
     }
-    else newName=newName+".s";
-    FILE* file=fopen(newName.c_str(),"w");//创建输出文件
+    else newName = newName + ".s";
+    FILE* file = fopen(newName.c_str(), "w");//创建输出文件
     //生成数据段
     genData(file);
     //生成代码段
     //if(Args::opt)fprintf(file,"#优化代码\n");
     //else fprintf(file,"#未优化代码\n");
-    fprintf(file,".text\n");
-    for(int i=0;i<funList.size();i++){
+    fprintf(file, ".text\n");
+    for(int i = 0; i < funList.size(); i++){
         //printf("-------------生成函数<%s>--------------\n",funTab[funList[i]]->getName().c_str());
         funTab[funList[i]]->genAsm(file);
     }
     fclose(file);
-}*/
+}

@@ -1,10 +1,11 @@
 #pragma once
+#include <iostream>
 #include "common.h"
 #include "Token.h"
 #include "Inter.h"
 #include "GenInter.h"
 #include "Symtab.h"
-#include <iostream>
+#include "platform.h"
 
 class Var {
 public:
@@ -24,6 +25,20 @@ public:
         isConstant = true;
         setType(KW_INT);
         setLeft(false);
+        switch (tk->tag) {
+        case INTCONST:
+            setType(KW_INT);
+            name = "<int>";
+            intVal = ((Num*)tk)->val;
+            break;
+        case STR:
+            setType(KW_CHAR);
+            name = GenIR::genLb();
+            strVal = ((Str*)tk)->str;
+            setArray(strVal.size() + 1);
+        default:
+            break;
+        }
         name = "<int>";
         intVal = ((Num*)tk)->val;
     }
@@ -36,6 +51,16 @@ public:
         setType(KW_INT);
         intVal = v;
         setLeft(false);
+    }
+
+    //变量，指针
+    Var(vector<int>&sp, Tag t, bool ptr, string name, Var*init) {
+        clear();
+        scopePath = sp;  //初始化路径
+        setType(t);
+        setPtr(ptr);
+        setName(name);
+        initData=init;
     }
 
     //数组
@@ -70,7 +95,7 @@ public:
     }
 
     //构造变量
-    Var(vector<int>& scope, Tag t, string name, Var* init=NULL) {
+    Var(vector<int>& scope, Tag t, string name, Var* init = NULL) {
         clear();
         scopePath = scope;
         setType(t);
@@ -112,6 +137,8 @@ public:
         }
         if(this->type == KW_INT)
             size = 4;
+        else if(this->type == KW_CHAR)
+            size = 1;
     }
 
     //设置数组维度
@@ -135,6 +162,20 @@ public:
         size *= arrayLength;                   //总大小=长度*类型大小
     }
 
+    void setArray(int len)
+    {
+        if (len <= 0) {
+            //SEMERROR(ARRAY_LEN_INVALID, name);//数组长度小于等于0错误
+            return;
+        }
+        else {
+            isArray = true;
+            isLeft = false;                     //数组不能作为左值
+            arrayLength = len;
+            size *= len;                        //变量大小乘以数组长度
+        }
+    }
+
     //获取数组
     bool getArray() {
         return isArray;
@@ -144,7 +185,6 @@ public:
     void setOffset(int d) {
         offset = d;
     }
-
     //获取偏移
     int getOffset() {
         return offset;
@@ -158,8 +198,12 @@ public:
         isInited = false;
         if(init->isConstant) {
             isInited = true;
-            if(init->isArray)
-                arrayVal = init->arrayVal;
+            if (init->isArray) {
+                if (init->type == KW_CHAR)             //字符数组只能是字符串了
+                    ptrVal = init->name;
+                else
+                    arrayVal = init->arrayVal;
+            }
             else
                 intVal = init->intVal;
         }
@@ -168,11 +212,50 @@ public:
         return false;
     }
 
+   //判断字符指针
+   bool isCharPtr() {
+       return type == KW_CHAR && !isBase();
+   }
+
+   //获取指针
+   bool getPtr() {
+       return isPtr;
+   }
+
     //获取初始化值
     Var* getInitData() {
         return initData;
     }
 
+    string getRawStr() {
+        string raw;
+        for (int i = 0; i < strVal.length(); i++) {
+            switch (strVal[i]) {
+            case '\n':
+                raw.append("\\n");
+                break;
+            case '\t':
+                raw.append("\\t");
+                break;
+            case '\0':
+                raw.append("\\000");
+                break;
+            case '\\':
+                raw.append("\\\\");
+                break;
+            case '\"':
+                raw.append("\\\"");
+                break;
+            default:
+                raw.push_back(strVal[i]);
+                break;
+            }
+        }
+        raw.append("\\000");
+        return raw;
+    }
+
+    //设置变量的左值
     void setLeft(bool L) {
         isLeft = L;
     }
@@ -192,9 +275,18 @@ public:
         return !isConstant;
     }
 
+    //基本类型常量（字符串除外）
+    bool isLiteral() {
+        return isConstant && isBase();
+    }
+
     //获取值
     int getVal() {
         return intVal;
+    }
+
+    string getStrVal() {
+        return strVal;
     }
 
     //获取数组值
@@ -221,7 +313,9 @@ public:
 
     //设置是否为指针
     void setPtr(bool ptr) {
-        isPtr = ptr;
+        if (!ptr)
+            return;
+        isPtr = true;
         size = 4;
     }
 
@@ -240,10 +334,19 @@ public:
         return ptr;
     }
 
+    string getPtrVal() {
+        return ptrVal;
+    }
+
     //输出变量的中间代码形式
     void value() {
         if(isConstant) {
-            cout << intVal;
+            if(type == KW_INT) 
+                cout << intVal;
+            else if (type == KW_CHAR) {
+                if (isArray)
+                    cout << name;
+            }
         }
         else
             cout << getName();
@@ -255,13 +358,16 @@ public:
         isArray = false;
         isPtr = false;
         isConstant = false;
-        isInited = true;
-        isLeft = false;
+        isInited = false;
+        isLeft = true;
         size = 0;
         offset = 0;
         index = -1;
         live = false;
         initData = nullptr;
+        ptr = nullptr;
+        regId = -1;
+        inMem = false;
     }
 
     //字符串转化
@@ -275,11 +381,19 @@ public:
     //输出变量信息
     void toString() {
         cout << tokenName[type];
+        if (isPtr)
+            cout << "*";
         cout << " " << name;
+        if (isArray)
+            cout << "[" << arrayLength << "]";
         if(isInited) {
             cout << " = ";
             switch(type) {
                 case KW_INT: cout << intVal; break;
+                case KW_CHAR: 
+                    if (isPtr)
+                        cout << "<" << ptrVal << ">";
+                    break;
             }
         }
         cout << "; size=" << size << " scope=\"";
@@ -308,6 +422,8 @@ private:
     Var* initData;                                //初值
     bool isInited;                                //是否初始化
     int intVal;                                   //整型初值
+    string strVal;                                //字符串初值
+    string ptrVal;                                //字符指针初值
     vector<int> arrayVal;                         //数组初值
     vector<int> dimension;                        //数组维度
     int offset;                                   //变量的栈帧偏移
@@ -333,9 +449,9 @@ public:
         type = t;
         this->name = name;
         parameter = paraList;
-        SP = 0;
-        maxDepth = 0;
-        for(int i = 0, argOff = 8; i < parameter.size(); i++, argOff += 4)  //为参数分配栈空间
+        SP = Plat::stackBase;
+        maxDepth = Plat::stackBase;
+        for(int i = 0, argOff = 4; i < parameter.size(); i++, argOff += 4)  //为参数分配栈空间
             parameter[i]->setOffset(argOff);
     }
 
@@ -365,15 +481,20 @@ public:
     bool match(vector<Var*>& args) {
         if(parameter.size() != args.size())
             return false;
-        for(int i = 0; i < parameter.size(); i++) {
-            /*if(!GenIR::typeCheck(parameter[i], args[i]))
-                return false;*/
-        }
+       /* for(int i = 0; i < parameter.size(); i++) {
+            if(!GenIR::typeCheck(parameter[i], args[i]))
+                return false;
+        } */
         return true;
     }
 
     Tag getType() {
         return type;
+    }
+
+    //获取参数列表
+    vector<Var*>& getParaVar() {
+        return parameter;
     }
 
     //获取返回点
@@ -416,12 +537,44 @@ public:
         cout << "\t\tmaxDepth=" << maxDepth << endl;
     }
 
+    void Fun::genAsm(FILE* file)
+    {
+        vector<InterInst*> code;
+        code = interCode.getCode();
+        const char* pname = name.c_str();
+        fprintf(file, "#函数%s代码\n", pname);
+        fprintf(file, "\t.global %s\n", pname);//.global fun\n
+        fprintf(file, "%s:\n", pname);//fun:\n
+        ILoc il;//ILOC代码
+        //将最终的中间代码转化为ILOC代码
+        Selector sl(code, il);//指令选择器
+        sl.select();
+        //对ILOC代码进行窥孔优化
+        //PeepHole ph(il);//窥孔优化器
+        //将优化后的ILOC代码输出为汇编代码
+        il.outPut(file);
+    }
+
+    int getMaxDep() {
+        return maxDepth;
+    }
+
+    void setMaxDep(int dep) {
+        maxDepth = dep;
+        relocated = true;
+    }
+
+    bool isRelocated() {
+        return relocated;
+    }
+
 private:    
     string name;                                  //函数名
     Tag type;                                     //返回值类型
     vector<Var*> parameter;                       //参数表
     int maxDepth;                                 //栈需要分配的最大空间
     int SP;                                       //当前栈指针，指向栈顶
+    bool relocated;                               //栈帧重定位标记
     vector<int> scopeSP;                          //作用域栈指针
     InterCode interCode;                          //目标代码
     InterInst* retPoint;                          //返回点

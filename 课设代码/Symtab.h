@@ -20,6 +20,9 @@ public:
     //添加变量
     void addVar(Var* var);
 
+    //添加字符串常量
+    void addStr(Var* v);
+
     //获取变量
     Var* getVar(string name);
 
@@ -96,6 +99,7 @@ public:
 
     void printInterCode();
 
+    void genAsm(char* fileName);               //输出汇编文件
     /*void genAsm(char* fileName) {
         string newName=fileName;
         int pos = newName.rfind(".c");
@@ -123,6 +127,7 @@ public:
 private:
     unordered_map<string, vector<Var*>*> varTab;  //变量表，值为同名变量链
     unordered_map<string, Fun*> funTab;           //函数表
+    unordered_map<string, Var*> strTab;           //字符串常量表
     Fun* currentFun;                              //当前分析的函数
     int scopeNum;                                 //作用域编号
     vector<int> scopePath;                        //作用域的嵌套路径
