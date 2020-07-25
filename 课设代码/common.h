@@ -7,12 +7,12 @@
 using namespace std;
 
 enum Tag {
-	ERR,					
-	END,					
-	ID,						
-	KW_INT, KW_VOID,
-	KW_CONST,		
-	INTCONST,					
+	ERR,
+	END,
+	ID,
+	KW_INT, KW_VOID, KW_CHAR,
+	KW_CONST,
+	INTCONST, STR,
 	NOT, LEA,				
 	ADD, SUB, MUL, DIV, MOD,	
 	INC, DEC,				

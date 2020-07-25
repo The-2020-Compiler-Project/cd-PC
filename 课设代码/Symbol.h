@@ -537,8 +537,7 @@ public:
         cout << "\t\tmaxDepth=" << maxDepth << endl;
     }
 
-    void Fun::genAsm(FILE* file)
-    {
+    void genAsm(FILE* file) {
         vector<InterInst*> code;
         code = interCode.getCode();
         const char* pname = name.c_str();

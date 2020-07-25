@@ -25,5 +25,12 @@ public:
 	int val;
 	Num(int v);
 	virtual string toString();
+};
 
+class Str :public Token
+{
+public:
+	string str;
+	Str(string s);
+	virtual string toString();
 };
